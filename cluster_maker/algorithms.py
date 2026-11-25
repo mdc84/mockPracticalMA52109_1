@@ -22,25 +22,62 @@ def init_centroids(
     """
     if k <= 0:
         raise ValueError("k must be a positive integer.")
+    """
+        <MY COMMENTS START>
+            arange used to sample row indexes.
+        <MY COMMENTS END>
+    """
     n_samples = X.shape[0]
-    if k > X.shape[1]:
+    """
+        <MY COMMENTS START>
+            index 0 used to get the no. of points:
+        <MY COMMENTS END>
+    """
+    if k > X.shape[0]:
         raise ValueError("k cannot be larger than the number of samples.")
 
     rng = np.random.RandomState(random_state)
-    indices = rng.choice(n_samples, size=k + 1, replace=False)
+    """
+        <MY COMMENTS START>
+            size = k used to prevent Out of Bounds Exceptions
+            if k = shape[0] - 1
+            and
+            extra samples for k <= shape[0] - 2 
+        <MY COMMENTS END>
+    """
+    indices = rng.choice(n_samples, size=k, replace=False)
     return X[indices]
 
 
 def assign_clusters(X: np.ndarray, centroids: np.ndarray) -> np.ndarray:
     """
     Assign each sample to the nearest centroid (Euclidean distance).
+
+    Parameters
+    ----------
+    X: (n_samples, n_features)
+    centroids: (k, n_features)
+
+    Returns
+    ----------
+    labels : ndarray of shape (n_samples,) containing centroid indexes.
     """
-    # X: (n_samples, n_features)
-    # centroids: (k, n_features)
+
     # Broadcast to compute distances
     diff = X[:, np.newaxis, :] - centroids[np.newaxis, :, :]
-    distances = np.linalg.norm(diff, axis=1)  # (n_samples, k)
-    labels = np.argmax(distances, axis=1)
+    """
+    <MY COMMENTS START>
+    axis changed to 2 to collapse the last axis.
+    <MY COMMENTS END>
+    """
+    distances = np.linalg.norm(diff, axis=2)  # (n_samples, k)
+    """
+    <MY COMMENTS START>
+    argmin used to find the closest centroid.
+    <MY COMMENTS END>
+    """
+    labels = np.argmin(distances, axis=1)
+    
     return labels
 
 
@@ -53,6 +90,20 @@ def update_centroids(
     """
     Update centroids by taking the mean of points in each cluster.
     If a cluster becomes empty, re-initialise its centroid randomly from X.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+    labels : ndarray of the centroid index for each data point.
+    k : int
+        Number of clusters.
+    random_state : int
+        seed or None
+
+    Returns
+    -------
+    labels : ndarray of shape (n_samples,)
+    centroids : ndarray of shape (k, n_features)
     """
     n_features = X.shape[1]
     new_centroids = np.zeros((k, n_features), dtype=float)
@@ -89,7 +140,8 @@ def kmeans(
         Maximum number of iterations.
     tol : float, default 1e-4
         Convergence tolerance on centroid movement.
-    random_state : int or None
+    random_state : int,
+        seed or None
 
     Returns
     -------
@@ -119,6 +171,12 @@ def sklearn_kmeans(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Thin wrapper around scikit-learn's KMeans.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+    k : int Number of clusters.
+    random_state : int seed or None
 
     Returns
     -------
